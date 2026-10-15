@@ -34,7 +34,8 @@ hermes-custom/
 ├── plugins/
 │   ├── image_gen/comfyui/                # Hermes ComfyUI image_gen plugin
 │   └── video_gen/comfyui/                # Hermes ComfyUI video_gen plugin
-└── install.sh                            # One-step installer for a new machine
+├── install.sh                            # One-step installer for a new machine
+└── update-hermes.sh                      # One-command upstream updater + gateway restart
 ```
 
 ---
@@ -77,12 +78,10 @@ hermes-custom/
 
 ## Pulling Official Upstream Hermes Updates
 
-Whenever Nous Research releases updates to `hermes-agent`, run:
+Whenever Nous Research releases updates to `hermes-agent`, you can simply run:
 
 ```bash
-cd ~/.hermes/hermes-agent
-git fetch upstream
-git rebase upstream/main
-git push origin main --force-with-lease
-hermes gateway stop && hermes gateway ensure
+~/hermes-custom/update-hermes.sh
 ```
+
+This fetches `NousResearch/hermes-agent`, rebases your custom ComfyUI/Signal commit on top, pushes to `zermacode/hermes-agent`, syncs `~/hermes-agent`, and restarts the Hermes gateway.
