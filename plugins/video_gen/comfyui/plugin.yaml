@@ -1,0 +1,6 @@
+name: comfyui
+version: 1.0.0
+description: "Local ComfyUI video generation backend (routes text-to-video and image-to-video workflows on RTX 3090 by default)."
+author: Local
+kind: backend
+requires_env: []

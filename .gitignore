@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.env
+auth.json
+*.db
+*.db-shm
+*.db-wal
+output_api/
+cache/
+image_cache/
+audio_cache/
+document_cache/
+sessions/
+logs/
