@@ -1,6 +1,6 @@
-# Hermes Custom Setup (Signal + Local ComfyUI Image & Video Generation)
+# Hermes Custom Setup (Signal + ComfyUI Image & Video Generation)
 
-This repository contains the custom workflows, skills, configuration, and installer for running **Hermes Agent** on Signal with local **ComfyUI** image and video generation (defaulting to the RTX 3090 instance on `http://127.0.0.1:8189`).
+This repository contains the custom workflows, skills, configuration, and installer for running **Hermes Agent** on Signal with **ComfyUI** image and video generation on Tailscale host `nvidia` (defaulting to the RTX 3090 instance on `http://nvidia:8189`, with RTX 5090 on `http://nvidia:8188`).
 
 Companion Hermes Agent fork: [`zermacode/hermes-agent`](https://github.com/zermacode/hermes-agent)
 

@@ -1,10 +1,10 @@
-"""Local ComfyUI image generation and editing backend for Hermes Agent.
+"""ComfyUI image generation and editing backend for Hermes Agent.
 
 Routes automatically based on input modality:
   - If an image is passed via ``image_url`` / ``reference_image_urls`` OR attached to the
     current turn on Signal/messaging (``_native_turn_images``), runs ``qwen-image-edit.json``.
   - If text-only, runs ``qwen-image-text.json``.
-Defaults to the local RTX 3090 ComfyUI instance (``http://127.0.0.1:8189``).
+Defaults to the RTX 3090 ComfyUI instance on Tailscale host ``nvidia`` (``http://nvidia:8189``).
 
 Output directory routing:
   - Signal DM (or DuetPrivateStatus) from +12197418383 -> ~/hermes-data-private/output

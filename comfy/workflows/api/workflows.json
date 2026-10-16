@@ -2,12 +2,12 @@
   "default_instance": "3090",
   "instances": {
     "3090": {
-      "url": "http://127.0.0.1:8189",
-      "description": "RTX 3090 ComfyUI (Default for Signal image/video generation)"
+      "url": "http://nvidia:8189",
+      "description": "RTX 3090 ComfyUI on nvidia (Default for Signal image/video generation)"
     },
     "5090": {
-      "url": "http://127.0.0.1:8188",
-      "description": "RTX 5090 ComfyUI"
+      "url": "http://nvidia:8188",
+      "description": "RTX 5090 ComfyUI on nvidia"
     }
   },
   "routing": {

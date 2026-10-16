@@ -1,8 +1,8 @@
-"""Local ComfyUI video generation backend for Hermes Agent.
+"""ComfyUI video generation backend for Hermes Agent.
 
-Routes text-to-video and image-to-video requests through ``/home/agent/AI/comfy/comfy_api.py``
-and ``/home/agent/AI/comfy/workflows/api/workflows.json``, defaulting to RTX 3090
-(``http://127.0.0.1:8189``).
+Routes text-to-video and image-to-video requests through ``~/AI/comfy/comfy_api.py``
+and ``~/AI/comfy/workflows/api/workflows.json``, defaulting to RTX 3090 on Tailscale
+host ``nvidia`` (``http://nvidia:8189``).
 
 Output directory routing:
   - Signal DM (or DuetPrivateStatus) from +12197418383 -> ~/hermes-data-private/output

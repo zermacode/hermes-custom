@@ -1407,6 +1407,8 @@ gateway:
   trust_env: true
   strict: false
   media_delivery_allow_dirs:
+    - "/home/madmax/hermes-data-private/output"
+    - "/home/madmax/hermes-data/output"
     - "/home/agent/hermes-data-private/output"
     - "/home/agent/hermes-data/output"
   trust_recent_files: true
@@ -1823,14 +1825,14 @@ image_gen:
   model: "auto"
   comfyui:
     instance: "3090"
-    base_url: "http://127.0.0.1:8189"
+    base_url: "http://nvidia:8189"
 
 video_gen:
   provider: "comfyui"
   model: "auto"
   comfyui:
     instance: "3090"
-    base_url: "http://127.0.0.1:8189"
+    base_url: "http://nvidia:8189"
 
 # =============================================================================
 # Response Pacing (Messaging Platforms)

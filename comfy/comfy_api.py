@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Flexible ComfyUI API workflow runner and router for Hermes Agent & CLI.
 
-Default instance: RTX 3090 (http://127.0.0.1:8189)
-Workflows directory: /home/agent/AI/comfy/workflows/api/
+Default instance: RTX 3090 (http://nvidia:8189)
+Workflows directory: ~/AI/comfy/workflows/api/
 
 Routing rules:
   - Image request with an input image attached -> image_edit workflow (qwen-image-edit.json)
@@ -17,7 +17,7 @@ Output directory routing:
 Video features:
   - Duration: defaults to 5 seconds if omitted; clamped to [1, 15] seconds.
   - Prompt enhancement: automatically uses the `h3-prompt-writing` skill
-    (/home/agent/.agents/skills/h3-prompt-writing) to rewrite/enhance video prompts
+    (~/.agents/skills/h3-prompt-writing) to rewrite/enhance video prompts
     (T2VA, I2VA, FL2VA, Ref2VA) before sending to ComfyUI.
 """
 
@@ -189,8 +189,8 @@ def load_registry(registry_path: Path = REGISTRY_PATH) -> dict[str, Any]:
         return {
             "default_instance": "3090",
             "instances": {
-                "3090": {"url": "http://127.0.0.1:8189"},
-                "5090": {"url": "http://127.0.0.1:8188"},
+                "3090": {"url": "http://nvidia:8189"},
+                "5090": {"url": "http://nvidia:8188"},
             },
             "routing": {
                 "image_text": "qwen-image-text",
@@ -220,8 +220,8 @@ def resolve_base_url(
         url = instances[target].get("url") if isinstance(instances[target], dict) else str(instances[target])
         return url.rstrip("/")
     if target == "5090":
-        return "http://127.0.0.1:8188"
-    return "http://127.0.0.1:8189"
+        return "http://nvidia:8188"
+    return "http://nvidia:8189"
 
 
 def is_server_reachable(base_url: Optional[str] = None, timeout: float = 3.0) -> bool:
@@ -852,9 +852,22 @@ def submit_and_wait(
     view_url = f"{base}/view?{query}"
 
     media_bytes: Optional[bytes] = None
-    if direct_path.is_file():
-        media_bytes = direct_path.read_bytes()
-    else:
+    for _ in range(6):
+        try:
+            if direct_path.parent.is_dir():
+                os.listdir(direct_path.parent)
+        except Exception:
+            pass
+        if direct_path.is_file():
+            try:
+                media_bytes = direct_path.read_bytes()
+                if media_bytes:
+                    break
+            except Exception:
+                pass
+        time.sleep(0.25)
+
+    if not media_bytes:
         # Fallback if ComfyUI saved under raw_subfolder or default output dir
         for fallback_type, fallback_sub in (
             (view_type, clean_subfolder),
