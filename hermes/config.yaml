@@ -1406,7 +1406,9 @@ gateway:
   max_inbound_media_bytes: 134217728
   trust_env: true
   strict: false
-  media_delivery_allow_dirs: []
+  media_delivery_allow_dirs:
+    - "/home/agent/hermes-data-private/output"
+    - "/home/agent/hermes-data/output"
   trust_recent_files: true
   trust_recent_files_seconds: 600
   api_server:

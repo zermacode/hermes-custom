@@ -12,6 +12,10 @@ Companion Hermes Agent fork: [`zermacode/hermes-agent`](https://github.com/zerma
 hermes-custom/
 ├── comfy/
 │   ├── comfy_api.py                      # ComfyUI workflow router, runner & H3 prompt enhancer
+│   ├── launch_3090.sh                    # RTX 3090 launcher (defaults to ~/hermes-data/output)
+│   ├── launch_5090.sh                    # RTX 5090 launcher (defaults to ~/hermes-data/output)
+│   ├── custom_nodes/
+│   │   └── hermes_output_router.py       # Dynamic per-request output directory router hook
 │   └── workflows/api/
 │       ├── workflows.json                # Declarative workflow & node registry (3090 default)
 │       ├── qwen-image-text.json          # Text-to-Image workflow (Qwen Image)
@@ -50,6 +54,9 @@ hermes-custom/
    - **Image attached on Signal** $\rightarrow$ `h3_fastvideo_edit.json`
    - **Duration**: Defaults to **5 seconds** when omitted; clamped to **1–15 seconds** (injected into node `105:111`).
    - **H3 Prompt Enhancement**: Automatically uses the `h3-prompt-writing` skill + local LLM (`http://speedy:8080/v1`, model `roleplay`) to format prompts into H3's `integrated_multimodal_description:`, `overall_soundscape:`, and `non_diegetic_music:` sections (plus `<Picture 1>` visual alignment for Image-to-Video) before sending to ComfyUI.
+3. **Output Directory Routing (SMB Mounts)**:
+   - **Signal DM (or `DuetPrivateStatus`) from `+12197418383`** $\rightarrow$ ComfyUI writes directly to `~/hermes-data-private/output`.
+   - **All other sources (public Signal groups like `ai_poop_group`, other users, CLI, Web UI)** $\rightarrow$ ComfyUI writes directly to `~/hermes-data/output`.
 
 ---
 

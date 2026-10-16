@@ -1,11 +1,21 @@
 ---
 name: comfyui-media
-description: Generate and edit images or videos using the local ComfyUI RTX 3090 instance via image_generate, video_generate, or /home/agent/AI/comfy/comfy_api.py.
+description: Generate and edit images or videos using the local ComfyUI instances (RTX 3090 on port 8189, RTX 5090 on port 8188) via image_generate, video_generate, or /home/agent/AI/comfy/comfy_api.py.
 ---
 
-# Local ComfyUI Image & Video Generation (RTX 3090)
+# Local ComfyUI Image & Video Generation (RTX 3090 & RTX 5090)
 
-Hermes is wired to the locally running ComfyUI instance on the **RTX 3090** (`http://127.0.0.1:8189`) as the default backend (`comfyui`) for both `image_generate` and `video_generate`.
+Hermes is wired to the locally running ComfyUI instances (**RTX 3090** on `http://127.0.0.1:8189` default, **RTX 5090** on `http://127.0.0.1:8188`) as the default backend (`comfyui`) for both `image_generate` and `video_generate`.
+
+## Automatic Output Directory Routing (SMB Mounts)
+
+ComfyUI and `comfy_api.py` automatically route and save generated images and videos directly to the appropriate SMB mount based on the incoming request source:
+- **Requests from `+12197418383` over Signal (Direct Message or `DuetPrivateStatus`)**:
+  Saved directly by ComfyUI to `/home/agent/hermes-data-private/output` (`~/hermes-data-private/output`).
+- **All other requests (public Signal groups like `ai_poop_group`, other users, CLI, Web UI)**:
+  Saved directly by ComfyUI to `/home/agent/hermes-data/output` (`~/hermes-data/output`).
+
+> **Important**: When invoking `/home/agent/AI/comfy/comfy_api.py` directly (for example with `--instance 5090`), **omit `--output` / `-o`** so ComfyUI's native SMB output path (`"path"` in the returned JSON) is used directly without creating extra copies in `~/.hermes/cache/`. Reference the returned `"path"` in your reply as `MEDIA:<path>`.
 
 ## Automatic Image Workflow Routing on Signal
 
@@ -33,4 +43,4 @@ When a user requests a video (with or without an attached image):
    - Video generation uses the `h3-prompt-writing` skill (`~/.agents/skills/h3-prompt-writing`, also installed in Hermes skills) to format prompts into the H3 multimodal structure (`integrated_multimodal_description:`, `overall_soundscape:`, `non_diegetic_music:`, and `<Picture 1>` alignment for image-to-video).
    - You can load `skill_view(name="h3-prompt-writing")` to craft the structured H3 prompt yourself, **or** pass a natural-language prompt to `video_generate` and `comfy_api.py` will automatically enhance it using the `h3-prompt-writing` guide before submitting to ComfyUI.
 4. **Delivery to Signal**:
-   - `image_generate` and `video_generate` automatically attach the generated image/video file to your Signal reply—no extra commands needed.
+   - `image_generate` and `video_generate` automatically attach the generated image/video file from the SMB mount to your Signal reply—no extra commands needed.

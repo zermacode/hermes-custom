@@ -3,6 +3,10 @@
 Routes text-to-video and image-to-video requests through ``/home/agent/AI/comfy/comfy_api.py``
 and ``/home/agent/AI/comfy/workflows/api/workflows.json``, defaulting to RTX 3090
 (``http://127.0.0.1:8189``).
+
+Output directory routing:
+  - Signal DM (or DuetPrivateStatus) from +12197418383 -> ~/hermes-data-private/output
+  - All other requests -> ~/hermes-data/output
 """
 
 from __future__ import annotations
@@ -27,6 +31,8 @@ from agent.video_gen_provider import (
 
 logger = logging.getLogger(__name__)
 
+_COMFY_API_MTIME: Optional[float] = None
+
 
 def _resolve_comfy_api_path() -> Path:
     env_path = os.environ.get("HERMES_COMFY_API")
@@ -44,17 +50,23 @@ def _resolve_comfy_api_path() -> Path:
 
 
 def _load_comfy_api():
-    """Load comfy_api.py dynamically."""
+    """Load comfy_api.py dynamically, reloading if the file changed on disk."""
+    global _COMFY_API_MTIME
     mod_name = "_hermes_comfy_api"
-    if mod_name in sys.modules:
-        return sys.modules[mod_name]
     api_path = _resolve_comfy_api_path()
+    try:
+        mtime = api_path.stat().st_mtime
+    except OSError:
+        mtime = None
+    if mod_name in sys.modules and _COMFY_API_MTIME == mtime:
+        return sys.modules[mod_name]
     spec = importlib.util.spec_from_file_location(mod_name, str(api_path))
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Could not load ComfyUI runner at {api_path}")
     mod = importlib.util.module_from_spec(spec)
     sys.modules[mod_name] = mod
     spec.loader.exec_module(mod)
+    _COMFY_API_MTIME = mtime
     return mod
 
 
@@ -220,6 +232,7 @@ class ComfyUIVideoGenProvider(VideoGenProvider):
             if isinstance(explicit_model, str) and explicit_model.strip() not in ("", "auto")
             else None
         )
+        instance = str(kwargs.get("instance") or self._instance_or_url()).strip()
 
         try:
             res = comfy_api.run_comfy_workflow(
@@ -232,14 +245,18 @@ class ComfyUIVideoGenProvider(VideoGenProvider):
                 duration=duration,
                 negative_prompt=negative_prompt or cfg.get("negative_prompt"),
                 seed=seed,
-                instance=self._instance_or_url(),
+                instance=instance,
                 timeout=float(cfg.get("timeout", 900.0)),
             )
-            saved_path = save_bytes_video(
-                res["bytes"],
-                prefix="comfyui",
-                extension=res.get("extension") or "mp4",
-            )
+            direct_path = res.get("path")
+            if direct_path and Path(direct_path).is_file():
+                saved_path = Path(direct_path)
+            else:
+                saved_path = save_bytes_video(
+                    res["bytes"],
+                    prefix="comfyui",
+                    extension=res.get("extension") or "mp4",
+                )
         except Exception as exc:
             err_type = getattr(exc, "error_type", "api_error")
             logger.warning("ComfyUI video generation failed: %s", exc, exc_info=True)
@@ -267,6 +284,8 @@ class ComfyUIVideoGenProvider(VideoGenProvider):
                 "duration": res.get("duration", effective_duration),
                 "prompt_id": res["prompt_id"],
                 "base_url": res["base_url"],
+                "output_dir": res.get("output_dir"),
+                "private": res.get("private", False),
                 "effective_prompt": res.get("effective_prompt", prompt_clean),
                 "media_tag": f"MEDIA:{saved_path}",
             },

@@ -5,6 +5,10 @@ Routes automatically based on input modality:
     current turn on Signal/messaging (``_native_turn_images``), runs ``qwen-image-edit.json``.
   - If text-only, runs ``qwen-image-text.json``.
 Defaults to the local RTX 3090 ComfyUI instance (``http://127.0.0.1:8189``).
+
+Output directory routing:
+  - Signal DM (or DuetPrivateStatus) from +12197418383 -> ~/hermes-data-private/output
+  - All other requests -> ~/hermes-data/output
 """
 
 from __future__ import annotations
@@ -30,6 +34,7 @@ from plugins.image_gen._common import load_image_gen_config
 logger = logging.getLogger(__name__)
 
 _GENERATED_IMAGE_KIND = f"{provider_media.GENERATED_SUBDIR}/images"
+_COMFY_API_MTIME: Optional[float] = None
 
 
 def _resolve_comfy_api_path() -> Path:
@@ -48,17 +53,23 @@ def _resolve_comfy_api_path() -> Path:
 
 
 def _load_comfy_api():
-    """Load comfy_api.py dynamically."""
+    """Load comfy_api.py dynamically, reloading if the file changed on disk."""
+    global _COMFY_API_MTIME
     mod_name = "_hermes_comfy_api"
-    if mod_name in sys.modules:
-        return sys.modules[mod_name]
     api_path = _resolve_comfy_api_path()
+    try:
+        mtime = api_path.stat().st_mtime
+    except OSError:
+        mtime = None
+    if mod_name in sys.modules and _COMFY_API_MTIME == mtime:
+        return sys.modules[mod_name]
     spec = importlib.util.spec_from_file_location(mod_name, str(api_path))
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Could not load ComfyUI runner at {api_path}")
     mod = importlib.util.module_from_spec(spec)
     sys.modules[mod_name] = mod
     spec.loader.exec_module(mod)
+    _COMFY_API_MTIME = mtime
     return mod
 
 
@@ -208,6 +219,7 @@ class ComfyUIImageGenProvider(ImageGenProvider):
             if isinstance(explicit_model, str) and explicit_model.strip() not in ("", "auto")
             else None
         )
+        instance = str(kwargs.get("instance") or self._instance_or_url()).strip()
 
         try:
             res = comfy_api.run_comfy_workflow(
@@ -219,15 +231,19 @@ class ComfyUIImageGenProvider(ImageGenProvider):
                 aspect_ratio=aspect,
                 negative_prompt=kwargs.get("negative_prompt") or cfg.get("negative_prompt"),
                 seed=kwargs.get("seed"),
-                instance=self._instance_or_url(),
+                instance=instance,
                 timeout=float(cfg.get("timeout", 600.0)),
             )
-            saved_path = provider_media.save_bytes(
-                _GENERATED_IMAGE_KIND,
-                res["bytes"],
-                prefix="comfyui",
-                extension=res.get("extension") or "png",
-            )
+            direct_path = res.get("path")
+            if direct_path and Path(direct_path).is_file():
+                saved_path = Path(direct_path)
+            else:
+                saved_path = provider_media.save_bytes(
+                    _GENERATED_IMAGE_KIND,
+                    res["bytes"],
+                    prefix="comfyui",
+                    extension=res.get("extension") or "png",
+                )
         except Exception as exc:
             err_type = getattr(exc, "error_type", "api_error")
             logger.warning("ComfyUI image generation failed: %s", exc, exc_info=True)
@@ -252,6 +268,8 @@ class ComfyUIImageGenProvider(ImageGenProvider):
                 "seed": res["seed"],
                 "prompt_id": res["prompt_id"],
                 "base_url": res["base_url"],
+                "output_dir": res.get("output_dir"),
+                "private": res.get("private", False),
             },
         )
 
