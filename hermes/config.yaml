@@ -1366,11 +1366,14 @@ gateway:
   write_sessions_json: true
   multiplex_profiles: true
   profile_routes:
-    - name: user_mike_dm
+    - name: user_mike_global
       platform: signal
       profile: default
-      chat_id: "+12197418383"
       user_id: "+12197418383"
+    - name: user_mike_global_uuid
+      platform: signal
+      profile: default
+      user_id: "98465b4b-e807-4f58-9f07-f8b10cb262f0"
     - name: duet_private_status_group
       platform: signal
       profile: default
@@ -1380,6 +1383,11 @@ gateway:
       profile: limited
       chat_id: "+12197655518"
       user_id: "+12197655518"
+    - name: limited_user_dm_uuid
+      platform: signal
+      profile: limited
+      chat_id: "ca70b2af-6947-43a8-bc45-0dba4f7669dc"
+      user_id: "ca70b2af-6947-43a8-bc45-0dba4f7669dc"
     - name: ai_poop_group
       platform: signal
       profile: limited
@@ -2413,3 +2421,6 @@ platforms:
       chat_id: group:LPgw74WTrzqNHjOrw2LpB2TPNmw7oZVpkyhMGHgVScU=
       name: DuetPrivateStatus
       user_id: '+12197418383'
+onboarding:
+  seen:
+    busy_input_prompt: true
