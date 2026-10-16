@@ -1,7 +1,7 @@
 """ComfyUI video generation backend for Hermes Agent.
 
 Routes text-to-video and image-to-video requests through ``~/AI/comfy/comfy_api.py``
-and ``~/AI/comfy/workflows/api/workflows.json``, defaulting to RTX 3090 on Tailscale
+and ``~/hermes-data/workflows/workflows.json``, defaulting to RTX 3090 on Tailscale
 host ``nvidia`` (``http://nvidia:8189``).
 
 Output directory routing:
@@ -132,7 +132,7 @@ class ComfyUIVideoGenProvider(VideoGenProvider):
                 "id": "auto",
                 "display": "Auto (ComfyUI Video Router)",
                 "speed": "~60-180s",
-                "strengths": "Routes text-to-video and image-to-video workflows from workflows/api/workflows.json",
+                "strengths": "Routes text-to-video and image-to-video workflows from ~/hermes-data/workflows/workflows.json",
                 "price": "local (RTX 3090)",
                 "tier": "local",
                 "modalities": ["text", "image"],

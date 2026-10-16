@@ -2,13 +2,13 @@
 """Flexible ComfyUI API workflow runner and router for Hermes Agent & CLI.
 
 Default instance: RTX 3090 (http://nvidia:8189)
-Workflows directory: ~/AI/comfy/workflows/api/
+Workflows directory: ~/hermes-data/workflows/
 
 Routing rules:
-  - Image request with an input image attached -> image_edit workflow (qwen-image-edit.json)
-  - Image request with text only              -> image_text workflow (qwen-image-text.json)
-  - Video request with an input image attached -> video_image workflow (h3_fastvideo_edit.json)
-  - Video request with text only              -> video_text workflow (h3_fastvideo_text.json)
+  - Image request with an input image attached -> image_edit workflow (images/qwen-image-edit.json)
+  - Image request with text only              -> image_text workflow (images/qwen-image-text.json)
+  - Video request with an input image attached -> video_image workflow (video/h3_fastvideo_edit.json)
+  - Video request with text only              -> video_text workflow (video/h3_fastvideo_text.json)
 
 Output directory routing:
   - Requests from +12197418383 over Signal (DM or DuetPrivateStatus) -> ~/hermes-data-private/output
@@ -45,7 +45,9 @@ from typing import Any, Optional
 logger = logging.getLogger(__name__)
 
 COMFY_ROOT = Path(__file__).resolve().parent
-WORKFLOWS_API_DIR = COMFY_ROOT / "workflows" / "api"
+WORKFLOWS_API_DIR = Path(
+    os.path.expanduser(os.environ.get("HERMES_WORKFLOWS_DIR", "~/hermes-data/workflows"))
+).resolve()
 REGISTRY_PATH = WORKFLOWS_API_DIR / "workflows.json"
 
 PRIVATE_OUTPUT_DIR = Path(
@@ -530,12 +532,13 @@ def resolve_workflow(
     routing = reg.get("routing") or {}
 
     if workflow_name:
-        wf_id = workflow_name.removesuffix(".json")
+        wf_id = Path(workflow_name.removesuffix(".json")).name
     else:
         route_key = f"{media_type}_{'edit' if (media_type == 'image' and has_image) else ('image' if has_image else 'text')}"
         wf_id = routing.get(route_key)
         if not wf_id and media_type == "video":
-            candidates = sorted(WORKFLOWS_API_DIR.glob("*video*.json"))
+            video_dir = WORKFLOWS_API_DIR / "video"
+            candidates = sorted(video_dir.glob("*.json")) if video_dir.is_dir() else sorted(WORKFLOWS_API_DIR.glob("*video*.json"))
             for cand in candidates:
                 stem = cand.stem.lower()
                 if has_image and any(tag in stem for tag in ("i2v", "img", "image", "edit")):
@@ -555,9 +558,19 @@ def resolve_workflow(
             error_type="workflow_not_configured",
         )
 
-    wf_meta = copy.deepcopy(workflows.get(wf_id) or {})
-    wf_file = wf_meta.get("file") or f"{wf_id}.json"
-    wf_path = Path(wf_file) if Path(wf_file).is_absolute() else (WORKFLOWS_API_DIR / wf_file)
+    wf_meta = copy.deepcopy(workflows.get(wf_id) or (workflows.get(workflow_name) if workflow_name else None) or {})
+    wf_file = wf_meta.get("file") or (workflow_name if workflow_name and workflow_name.endswith(".json") else f"{wf_id}.json")
+    if Path(wf_file).is_absolute():
+        wf_path = Path(wf_file)
+    else:
+        wf_path = WORKFLOWS_API_DIR / wf_file
+        if not wf_path.is_file():
+            for subdir in ("images", "video"):
+                cand_path = WORKFLOWS_API_DIR / subdir / Path(wf_file).name
+                if cand_path.is_file():
+                    wf_path = cand_path
+                    break
+
     if not wf_path.is_file():
         raise ComfyAPIError(f"Workflow file not found: {wf_path}", error_type="workflow_not_found")
 

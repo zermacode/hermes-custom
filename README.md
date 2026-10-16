@@ -14,14 +14,8 @@ hermes-custom/
 │   ├── comfy_api.py                      # ComfyUI workflow router, runner & H3 prompt enhancer
 │   ├── launch_3090.sh                    # RTX 3090 launcher (defaults to ~/hermes-data/output)
 │   ├── launch_5090.sh                    # RTX 5090 launcher (defaults to ~/hermes-data/output)
-│   ├── custom_nodes/
-│   │   └── hermes_output_router.py       # Dynamic per-request output directory router hook
-│   └── workflows/api/
-│       ├── workflows.json                # Declarative workflow & node registry (3090 default)
-│       ├── qwen-image-text.json          # Text-to-Image workflow (Qwen Image)
-│       ├── qwen-image-edit.json          # Image-Edit workflow (Qwen Image Edit)
-│       ├── h3_fastvideo_text.json        # Text-to-Video+Audio workflow (MiniMax H3 8-step)
-│       └── h3_fastvideo_edit.json        # Image-to-Video+Audio workflow (MiniMax H3 8-step)
+│   └── custom_nodes/
+│       └── hermes_output_router.py       # Dynamic per-request output directory router hook
 ├── skills/
 │   └── creative/
 │       ├── comfyui-media/SKILL.md        # Instructions for Hermes image/video routing & duration
@@ -42,16 +36,23 @@ hermes-custom/
 └── update-hermes.sh                      # One-command upstream updater + gateway restart
 ```
 
+Shared workflows live on the SMB mount at `~/hermes-data/workflows/`:
+- `~/hermes-data/workflows/workflows.json`
+- `~/hermes-data/workflows/images/qwen-image-text.json`
+- `~/hermes-data/workflows/images/qwen-image-edit.json`
+- `~/hermes-data/workflows/video/h3_fastvideo_text.json`
+- `~/hermes-data/workflows/video/h3_fastvideo_edit.json`
+
 ---
 
 ## How Routing & Features Work
 
 1. **Image Generation (`image_generate`)**:
-   - **Text only** $\rightarrow$ `qwen-image-text.json`
-   - **Image attached on Signal** $\rightarrow$ `qwen-image-edit.json`
+   - **Text only** $\rightarrow$ `images/qwen-image-text.json`
+   - **Image attached on Signal** $\rightarrow$ `images/qwen-image-edit.json`
 2. **Video Generation (`video_generate`)**:
-   - **Text only** $\rightarrow$ `h3_fastvideo_text.json`
-   - **Image attached on Signal** $\rightarrow$ `h3_fastvideo_edit.json`
+   - **Text only** $\rightarrow$ `video/h3_fastvideo_text.json`
+   - **Image attached on Signal** $\rightarrow$ `video/h3_fastvideo_edit.json`
    - **Duration**: Defaults to **5 seconds** when omitted; clamped to **1–15 seconds** (injected into node `105:111`).
    - **H3 Prompt Enhancement**: Automatically uses the `h3-prompt-writing` skill + local LLM (`http://speedy:8080/v1`, model `roleplay`) to format prompts into H3's `integrated_multimodal_description:`, `overall_soundscape:`, and `non_diegetic_music:` sections (plus `<Picture 1>` visual alignment for Image-to-Video) before sending to ComfyUI.
 3. **Output Directory Routing (SMB Mounts)**:

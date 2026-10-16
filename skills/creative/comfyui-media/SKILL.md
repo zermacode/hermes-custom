@@ -21,20 +21,20 @@ ComfyUI and `comfy_api.py` automatically route and save generated images and vid
 
 When a user on Signal (direct chat or group chat) requests an image or edits an attached image:
 
-1. **Image Attached -> Image Edit Workflow (`qwen-image-edit.json`)**
+1. **Image Attached -> Image Edit Workflow (`images/qwen-image-edit.json`)**
    - If the incoming Signal message has an image attached (`[Image attached at: /path/to/image.png]`), pass that file path as `image_url` to `image_generate(prompt="...", image_url="/path/to/image.png")`.
-   - Even if `image_url` is omitted, the `comfyui` backend automatically detects images attached on the current turn (`_native_turn_images`) and routes to `~/AI/comfy/workflows/api/qwen-image-edit.json`.
-2. **Text Only -> Text-to-Image Workflow (`qwen-image-text.json`)**
+   - Even if `image_url` is omitted, the `comfyui` backend automatically detects images attached on the current turn (`_native_turn_images`) and routes to `~/hermes-data/workflows/images/qwen-image-edit.json`.
+2. **Text Only -> Text-to-Image Workflow (`images/qwen-image-text.json`)**
    - If no image is attached, call `image_generate(prompt="...", aspect_ratio="landscape" | "square" | "portrait")`.
-   - Routes to `~/AI/comfy/workflows/api/qwen-image-text.json`.
+   - Routes to `~/hermes-data/workflows/images/qwen-image-text.json`.
 
 ## Automatic Video Workflow Routing & H3 Prompt Enhancement on Signal
 
 When a user requests a video (with or without an attached image):
 
 1. **Workflow Routing**:
-   - **Text Only -> `h3_fastvideo_text.json`** (MiniMax H3 8-step FastVideo Text-to-Video + Audio).
-   - **Image Attached -> `h3_fastvideo_edit.json`** (MiniMax H3 8-step FastVideo Image-to-Video + Audio). Pass `image_url="/path/to/image.png"` to `video_generate` (or rely on automatic turn-image detection).
+   - **Text Only -> `video/h3_fastvideo_text.json`** (`~/hermes-data/workflows/video/h3_fastvideo_text.json`, MiniMax H3 8-step FastVideo Text-to-Video + Audio).
+   - **Image Attached -> `video/h3_fastvideo_edit.json`** (`~/hermes-data/workflows/video/h3_fastvideo_edit.json`, MiniMax H3 8-step FastVideo Image-to-Video + Audio). Pass `image_url="/path/to/image.png"` to `video_generate` (or rely on automatic turn-image detection).
 2. **Video Duration (`duration`)**:
    - Default duration is **5 seconds** if the user does not specify one.
    - Maximum duration is **15 seconds** (clamped to `[1, 15]`).
